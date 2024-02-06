@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bnyro.recorder.R
+import com.bnyro.recorder.db.AppDatabase
 import com.bnyro.recorder.obj.RecordingItemData
 import com.bnyro.recorder.ui.common.ClickableIcon
 import com.bnyro.recorder.ui.common.DialogButton
@@ -43,8 +44,11 @@ import com.bnyro.recorder.ui.dialogs.ConfirmationDialog
 import com.bnyro.recorder.ui.models.PlayerModel
 import com.bnyro.recorder.ui.views.VideoView
 import com.bnyro.recorder.util.IntentHelper
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun RecordingItem(
     recordingItem: RecordingItemData,
@@ -57,6 +61,7 @@ fun RecordingItem(
     val context = LocalContext.current
     val view = LocalView.current
     val haptic = LocalHapticFeedback.current
+    val db = AppDatabase.getDatabase(context)
 
     var showRenameDialog by remember {
         mutableStateOf(false)
@@ -246,7 +251,12 @@ fun RecordingItem(
                 onDismissRequest = { showDeleteDialog = false }
             ) {
                 playerModel.stopPlaying()
+                GlobalScope.launch {
+                    println("${recordingFile.name}")
+                    db.recordDao().deleteRecord("${recordingFile.name}")
+                }
                 recordingFile.delete()
+
                 playerModel.loadFiles()
             }
         }

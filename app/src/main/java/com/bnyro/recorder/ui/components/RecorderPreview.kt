@@ -14,11 +14,13 @@ import com.bnyro.recorder.ui.models.RecorderModel
 @Composable
 fun RecorderPreview(recordScreenMode: Boolean) {
     val recorderModel: RecorderModel = viewModel(LocalContext.current as ComponentActivity)
+
     if (recordScreenMode) {
         BlobIconBox(
             icon = R.drawable.ic_screen_record
         )
     } else {
+
         Crossfade(
             modifier = Modifier.fillMaxSize(),
             targetState = recorderModel.recordedAmplitudes

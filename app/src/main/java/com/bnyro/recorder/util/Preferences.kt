@@ -7,6 +7,10 @@ object Preferences {
     private const val PREF_FILE_NAME = "RecordYou"
     lateinit var prefs: SharedPreferences
 
+    const val currentFile = "username"
+    const val username = "username"
+    const val words = "words"
+    const val step = "step"
     const val targetFolderKey = "targetFolder"
     const val audioFormatKey = "audioFormat"
     const val audioSourceKey = "audioSource"

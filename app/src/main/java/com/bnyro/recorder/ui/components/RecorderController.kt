@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.media.projection.MediaProjectionManager
 import android.os.Build
+import android.os.Environment
 import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,11 +44,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bnyro.recorder.R
+import com.bnyro.recorder.db.AppDatabase
 import com.bnyro.recorder.enums.RecorderState
 import com.bnyro.recorder.enums.RecorderType
 import com.bnyro.recorder.ui.common.ClickableIcon
 import com.bnyro.recorder.ui.models.RecorderModel
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.io.File
 
+
+@OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun RecorderController(
     recordScreenMode: Boolean,
@@ -57,7 +66,7 @@ fun RecorderController(
     val context = LocalContext.current
     val mProjectionManager =
         context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-
+    val db = AppDatabase.getDatabase(context)
     val requestRecording = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -122,7 +131,30 @@ fun RecorderController(
                 IconButton(
                     onClick = {
                         when {
-                            recorderModel.recorderState != RecorderState.IDLE -> recorderModel.stopRecording()
+                            recorderModel.recorderState != RecorderState.IDLE -> {
+
+                                recorderModel.stopRecording()
+                                GlobalScope.launch {
+//                                    delay(2000L)
+//                                    println("${
+//                                        com.bnyro.recorder.util.Preferences.prefs.getString(
+//                                            com.bnyro.recorder.util.Preferences.currentFile,
+//                                            ""
+//                                        )
+//                                    }")
+//                                    val file: File = File(
+//                                        Environment.getExternalStorageDirectory().getAbsolutePath()+"${
+//                                            com.bnyro.recorder.util.Preferences.prefs.getString(
+//                                                com.bnyro.recorder.util.Preferences.currentFile,
+//                                                ""
+//                                            )
+//                                        }"
+//                                    )
+//                                    val file_size = (file.length() / 1024).toString().toInt()
+//                                    println(file_size)
+                                }
+                            }
+
                             recordScreenMode -> requestScreenRecording()
                             else -> recorderModel.startAudioRecorder(context)
                         }
@@ -191,3 +223,5 @@ fun RecorderController(
         }
     }
 }
+
+

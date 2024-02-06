@@ -1,36 +1,55 @@
 package com.bnyro.recorder.ui.screens
 
+import android.content.Context
+import android.os.Environment
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bnyro.recorder.R
+import com.bnyro.recorder.db.AppDatabase
 import com.bnyro.recorder.enums.SortOrder
 import com.bnyro.recorder.ui.common.ClickableIcon
 import com.bnyro.recorder.ui.components.PlayerView
 import com.bnyro.recorder.ui.dialogs.ConfirmationDialog
 import com.bnyro.recorder.ui.models.PlayerModel
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+@OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
 @Composable
 fun PlayerScreen(
     showVideoModeInitially: Boolean
@@ -46,6 +65,8 @@ fun PlayerScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState()
     )
+    val context = LocalContext.current
+    val db = AppDatabase.getDatabase(LocalContext.current)
 
     Scaffold(
         modifier = Modifier
@@ -110,6 +131,35 @@ fun PlayerScreen(
                     ) {
                         showDeleteDialog = true
                     }
+                    IconButton(onClick = {
+                        GlobalScope.launch {
+                            db.recordDao().getAllRecords()?.let {list->
+                                try {
+                                    val root = File(Environment.getExternalStorageDirectory(), "Recordings")
+                                    if (!root.exists()) {
+                                        root.mkdirs()
+                                    }
+                                    val gpxfile = File(root, "database-${System.currentTimeMillis()}.csv")
+                                    val writer = FileWriter(gpxfile)
+                                    writer.append(list.joinToString("\n") {
+                                        "${it.id},${it.filename},${it.date},${it.fileDirectory},${
+                                            it.words.joinToString(
+                                                "*"
+                                            )
+                                        },${it.filesize}"
+                                    })
+                                    writer.flush()
+                                    writer.close()
+
+                                } catch (e: IOException) {
+                                    e.printStackTrace()
+                                }
+                            }
+
+                        }
+                    }) {
+                        Icon(Icons.Default.Download, contentDescription = null)
+                    }
                 },
                 scrollBehavior = scrollBehavior
             )
@@ -131,7 +181,12 @@ fun PlayerScreen(
             title = if (playerModel.selectedFiles.isEmpty()) R.string.delete_all else R.string.delete,
             onDismissRequest = { showDeleteDialog = false }
         ) {
+            GlobalScope.launch {
+                db.recordDao().deleteAll()
+            }
             playerModel.deleteFiles()
         }
     }
 }
+
+

@@ -79,7 +79,7 @@ fun PlayerView(
         ) { index ->
             when (index) {
                 0 -> RecordingItemList(
-                    items = playerModel.audioRecordingItems,
+                    items = playerModel.audioRecordingItems.reversed(),
                     isVideoList = false
                 )
 
